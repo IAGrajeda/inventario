@@ -3,11 +3,16 @@ import { obtenerProductos, agregarInventario, sacarInventario, darDeBaja, reacti
 import FormCrearProducto from "./Components/FormCrearProducto";
 import Historial from "./Components/Historial";
 import Login from "./Components/Login";
+import ModalEntrada from "./Components/ModalEntrada";
 
 function App() {
   const [movimientos, setMovimientos] = useState([]);
   const [productos, setProductos] = useState([]);
   const [usuarioActual, setUsuarioActual] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [modalSalidaOpen, setModalSalidaOpen] = useState(false);
+  const [productoSalidaSeleccionado, setProductoSalidaSeleccionado] = useState(null);
 
   const cargarProductos = async () => {
     try {
@@ -33,16 +38,6 @@ function App() {
       cargarMovimientos();
     }
   }, [usuarioActual]);
-
-  const handleEntrada = async (id) => {
-    try {
-      await agregarInventario(id, 5, usuarioActual.usuario, usuarioActual.rol);
-      await cargarProductos();
-      await cargarMovimientos();
-    } catch (error) {
-      console.error("Error al agregar inventario", error);
-    }
-  };
 
   const handleSalida = async (id) => {
     try {
@@ -78,13 +73,50 @@ function App() {
     setUsuarioActual({ usuario, rol });
   };
 
-  // ✅ Aquí va la condición para mostrar login
   if (!usuarioActual) {
     return <Login onLogin={handleLogin} />;
   }
 
   const handleLogout = () => {
     setUsuarioActual(null);
+  };
+
+  const handleEntradaClick = (producto) => {
+    setProductoSeleccionado(producto);
+    setModalOpen(true);
+  };
+
+  const handleConfirmEntrada = async (cantidad) => {
+    try {
+      await agregarInventario(productoSeleccionado.idProducto, cantidad, usuarioActual.usuario, usuarioActual.rol);
+      await cargarProductos();
+      await cargarMovimientos();
+      setModalOpen(false);
+      setProductoSeleccionado(null);
+    } catch (error) {
+      console.error("Error al agregar inventario", error);
+    }
+  };
+
+  const handleSalidaClick = (producto) => {
+    setProductoSalidaSeleccionado(producto);
+    setModalSalidaOpen(true);
+  };
+
+  const handleConfirmSalida = async (cantidad) => {
+    try {
+      if (cantidad > productoSalidaSeleccionado.cantidad) {
+        alert("No puedes sacar más de la cantidad disponible");
+        return;
+      }
+      await sacarInventario(productoSalidaSeleccionado.idProducto, cantidad, usuarioActual.usuario, usuarioActual.rol);
+      await cargarProductos();
+      await cargarMovimientos();
+      setModalSalidaOpen(false);
+      setProductoSalidaSeleccionado(null);
+    } catch (error) {
+      console.error("Error al sacar inventario", error);
+    }
   };
 
   const productosVisibles = usuarioActual.rol === "Almacenista"
@@ -94,7 +126,7 @@ function App() {
   return (
     <div className="flex justify-around flex-col md:flex-row gap-4 p-4">
       <div className="md:w-2/3">
-        <div className="text-center justify-around  bg-slate-800 border border-gray-700 mb-2 flex items-center  p-2 h-12 ">
+        <div className="text-center justify-around bg-slate-800 border border-gray-700 mb-2 flex items-center p-2 h-12 ">
           <h1 className="text-xl font-bold text-white">
             Bienvenido: {usuarioActual.usuario} ({usuarioActual.rol})
           </h1>
@@ -107,8 +139,6 @@ function App() {
         </div>
 
         <div className="border border-gray-600 p-6 bg-gray-800 rounded-lg shadow-lg">
-
-
           <div className="flex justify-around">
             <h1 className="font-bold text-3xl text-green-400 text-center">Inventario</h1>
             {usuarioActual.rol === "Administrador" && (
@@ -136,21 +166,20 @@ function App() {
                 <div className="flex flex-wrap gap-2">
                   {usuarioActual.rol === "Administrador" && (
                     <button
-                      onClick={() => handleEntrada(p.idProducto)}
+                      onClick={() => handleEntradaClick(p)}
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
                     >
                       Entrada
                     </button>
                   )}
-                  { usuarioActual.rol === "Almacenista" && (
-                  <button
-                    onClick={() => handleSalida(p.idProducto)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-                  >
-                    Salida
-                  </button>
+                  {usuarioActual.rol === "Almacenista" && (
+                    <button
+                      onClick={() => handleSalidaClick(p)}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                    >
+                      Salida
+                    </button>
                   )}
-
                   {usuarioActual.rol === "Administrador" && (
                     p.estatus === "activo" ? (
                       <button
@@ -181,6 +210,18 @@ function App() {
           <Historial movimientos={movimientos} />
         </div>
       )}
+
+      <ModalEntrada
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={handleConfirmEntrada}
+      />
+
+      <ModalEntrada
+        isOpen={modalSalidaOpen}
+        onClose={() => setModalSalidaOpen(false)}
+        onConfirm={handleConfirmSalida}
+      />
     </div>
   );
 }
