@@ -12,6 +12,8 @@ function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [modalTipo, setModalTipo] = useState("entrada");
+  const [filtroTipo, setFiltroTipo] = useState("todos");
+  const [filtroProducto, setFiltroProducto] = useState("todos");
 
   const cargarProductos = async () => {
     try {
@@ -189,8 +191,39 @@ function App() {
 
       {usuarioActual.rol === "Administrador" && (
         <div className="md:w-1/3">
-          <h3 className="text-center font-semibold text-2xl flex items-center justify-center bg-slate-800 border border-gray-700 mb-2 h-12">Historial</h3>
-          <Historial movimientos={movimientos} />
+          <h3 className="text-center font-semibold text-2xl flex items-center justify-center bg-slate-800 border border-gray-700 mb-2 h-12">
+            Historial
+          </h3>
+
+          <div className="flex justify-center mb-2">
+            <select
+              value={filtroTipo}
+              onChange={(e) => setFiltroTipo(e.target.value)}
+              className="p-2 rounded bg-gray-900 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="todos">Todos</option>
+              <option value="Entrada">Entrada</option>
+              <option value="Salida">Salida</option>
+              <option value="Creacion">Creación</option>
+              <option value="Baja">Baja</option>
+              <option value="Reactivar">Reactivar</option>
+            </select>
+
+            <select
+              value={filtroProducto}
+              onChange={(e) => setFiltroProducto(e.target.value)}
+              className="p-2 rounded bg-gray-900 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="todos">Todos los productos</option>
+              {productos.map((p) => (
+                <option key={p.idProducto} value={p.nombre}>
+                  {p.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <Historial movimientos={movimientos} filtroTipo={filtroTipo} filtroProducto={filtroProducto} />
         </div>
       )}
 
