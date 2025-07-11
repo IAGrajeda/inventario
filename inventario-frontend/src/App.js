@@ -11,8 +11,7 @@ function App() {
   const [usuarioActual, setUsuarioActual] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-  const [modalSalidaOpen, setModalSalidaOpen] = useState(false);
-  const [productoSalidaSeleccionado, setProductoSalidaSeleccionado] = useState(null);
+  const [modalTipo, setModalTipo] = useState("entrada");
 
   const cargarProductos = async () => {
     try {
@@ -38,16 +37,6 @@ function App() {
       cargarMovimientos();
     }
   }, [usuarioActual]);
-
-  const handleSalida = async (id) => {
-    try {
-      await sacarInventario(id, 2, usuarioActual.usuario, usuarioActual.rol);
-      await cargarProductos();
-      await cargarMovimientos();
-    } catch (error) {
-      console.error("Error al sacar inventario", error);
-    }
-  };
 
   const handleBaja = async (id) => {
     try {
@@ -83,39 +72,33 @@ function App() {
 
   const handleEntradaClick = (producto) => {
     setProductoSeleccionado(producto);
+    setModalTipo("entrada");
     setModalOpen(true);
   };
 
-  const handleConfirmEntrada = async (cantidad) => {
+  const handleSalidaClick = (producto) => {
+    setProductoSeleccionado(producto);
+    setModalTipo("salida");
+    setModalOpen(true);
+  };
+
+  const handleConfirm = async (cantidad) => {
     try {
-      await agregarInventario(productoSeleccionado.idProducto, cantidad, usuarioActual.usuario, usuarioActual.rol);
+      if (modalTipo === "entrada") {
+        await agregarInventario(productoSeleccionado.idProducto, cantidad, usuarioActual.usuario, usuarioActual.rol);
+      } else {
+        if (cantidad > productoSeleccionado.cantidad) {
+          alert("No puedes sacar más de la cantidad disponible");
+          return;
+        }
+        await sacarInventario(productoSeleccionado.idProducto, cantidad, usuarioActual.usuario, usuarioActual.rol);
+      }
       await cargarProductos();
       await cargarMovimientos();
       setModalOpen(false);
       setProductoSeleccionado(null);
     } catch (error) {
-      console.error("Error al agregar inventario", error);
-    }
-  };
-
-  const handleSalidaClick = (producto) => {
-    setProductoSalidaSeleccionado(producto);
-    setModalSalidaOpen(true);
-  };
-
-  const handleConfirmSalida = async (cantidad) => {
-    try {
-      if (cantidad > productoSalidaSeleccionado.cantidad) {
-        alert("No puedes sacar más de la cantidad disponible");
-        return;
-      }
-      await sacarInventario(productoSalidaSeleccionado.idProducto, cantidad, usuarioActual.usuario, usuarioActual.rol);
-      await cargarProductos();
-      await cargarMovimientos();
-      setModalSalidaOpen(false);
-      setProductoSalidaSeleccionado(null);
-    } catch (error) {
-      console.error("Error al sacar inventario", error);
+      console.error("Error al actualizar inventario", error);
     }
   };
 
@@ -126,7 +109,7 @@ function App() {
   return (
     <div className="flex justify-around flex-col md:flex-row gap-4 p-4">
       <div className="md:w-2/3">
-        <div className="text-center justify-around bg-slate-800 border border-gray-700 mb-2 flex items-center p-2 h-12 ">
+        <div className="text-center justify-around bg-slate-800 border border-gray-700 mb-2 flex items-center p-2 h-12">
           <h1 className="text-xl font-bold text-white">
             Bienvenido: {usuarioActual.usuario} ({usuarioActual.rol})
           </h1>
@@ -214,13 +197,8 @@ function App() {
       <ModalEntrada
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        onConfirm={handleConfirmEntrada}
-      />
-
-      <ModalEntrada
-        isOpen={modalSalidaOpen}
-        onClose={() => setModalSalidaOpen(false)}
-        onConfirm={handleConfirmSalida}
+        onConfirm={handleConfirm}
+        tipo={modalTipo}
       />
     </div>
   );

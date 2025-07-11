@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function ModalEntrada({ isOpen, onClose, onConfirm }) {
+function ModalEntrada({ isOpen, onClose, onConfirm, tipo = "entrada" }) {
   const [cantidad, setCantidad] = useState(1);
 
   const handleConfirm = () => {
@@ -17,7 +17,9 @@ function ModalEntrada({ isOpen, onClose, onConfirm }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-gray-800 p-6 rounded-lg w-full max-w-md shadow-lg border border-gray-600">
-        <h2 className="text-xl font-bold text-green-400 mb-4 text-center">Agregar Entrada</h2>
+        <h2 className="text-xl font-bold text-white mb-4 text-center">
+          {tipo === "entrada" ? "Agregar Entrada" : "Registrar Salida"}
+        </h2>
         <input
           type="number"
           value={cantidad}

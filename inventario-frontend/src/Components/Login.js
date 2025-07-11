@@ -14,7 +14,7 @@ function Login({ onLogin }) {
         }
         if (
             (rol === "Administrador" && password !== "admin123") ||
-            (rol === "Almacenista" && password !== "alma123")
+            (rol === "Almacenista" && password !== "user123")
         ) {
             setError("Contraseña incorrecta.");
             return;
