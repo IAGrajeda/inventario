@@ -1,4 +1,5 @@
 package com.castores.inventario.controller;
+
 import com.castores.inventario.model.Movimiento;
 import com.castores.inventario.model.Producto;
 import com.castores.inventario.model.DTOProducto;
@@ -6,7 +7,6 @@ import com.castores.inventario.repository.MovimientoRepository;
 import com.castores.inventario.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.service.annotation.PutExchange;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,7 +22,6 @@ public class ProductoController {
     @Autowired
     private MovimientoRepository movimientoRepository;
 
-
     @GetMapping
     public List<Producto> listarProductos() {
         return productoRepository.findAll();
@@ -32,15 +31,20 @@ public class ProductoController {
     public Producto crearProducto(@RequestBody DTOProducto dtoproducto) {
         Producto producto = new Producto();
         producto.setNombre(dtoproducto.getNombre());
+        producto.setCantidad(dtoproducto.getCantidad()); // ✅ Aquí tomamos la cantidad enviada
 
         if (producto.getCantidad() == null || producto.getCantidad() < 0) {
             producto.setCantidad(0);
         }
-        if (producto.getEstatus() == null || producto.getEstatus().isEmpty()) {
+
+        if (dtoproducto.getEstatus() == null || dtoproducto.getEstatus().isEmpty()) {
             producto.setEstatus("activo");
+        } else {
+            producto.setEstatus(dtoproducto.getEstatus());
         }
 
         Producto nuevoProducto = productoRepository.save(producto);
+
         // Registrar movimiento
         Movimiento movimiento = new Movimiento();
         movimiento.setProducto(nuevoProducto);
@@ -50,6 +54,7 @@ public class ProductoController {
         movimiento.setRol(dtoproducto.getRol());
         movimiento.setFechaHora(LocalDateTime.now());
         movimientoRepository.save(movimiento);
+
         return nuevoProducto;
     }
 
@@ -60,7 +65,6 @@ public class ProductoController {
         producto.setCantidad(producto.getCantidad() + cantidad);
         productoRepository.save(producto);
 
-        //creacion del movimiento
         Movimiento movimiento = new Movimiento();
         movimiento.setProducto(producto);
         movimiento.setTipoMovimiento("Entrada");
@@ -69,6 +73,7 @@ public class ProductoController {
         movimiento.setRol(rol);
         movimiento.setFechaHora(LocalDateTime.now());
         movimientoRepository.save(movimiento);
+
         return producto;
     }
 
@@ -91,18 +96,17 @@ public class ProductoController {
         movimiento.setRol(rol);
         movimiento.setFechaHora(LocalDateTime.now());
         movimientoRepository.save(movimiento);
+
         return producto;
     }
 
     @PutMapping("/{id}/baja")
     public Producto darDeBaja(@PathVariable Long id, @RequestParam String usuario, @RequestParam String rol) {
-        Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        Producto producto = productoRepository.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
         producto.setEstatus("inactivo");
         productoRepository.save(producto);
 
-        // Registrar movimiento
         Movimiento movimiento = new Movimiento();
         movimiento.setProducto(producto);
         movimiento.setTipoMovimiento("Baja");
@@ -111,18 +115,17 @@ public class ProductoController {
         movimiento.setRol(rol);
         movimiento.setFechaHora(LocalDateTime.now());
         movimientoRepository.save(movimiento);
+
         return producto;
     }
 
     @PutMapping("/{id}/reactivar")
     public Producto reactivarProducto(@PathVariable Long id, @RequestParam String usuario, @RequestParam String rol) {
-        Producto producto = productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        Producto producto = productoRepository.findById(id).orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
         producto.setEstatus("activo");
         productoRepository.save(producto);
 
-        // Registrar movimiento
         Movimiento movimiento = new Movimiento();
         movimiento.setProducto(producto);
         movimiento.setTipoMovimiento("Reactivar");
@@ -131,6 +134,7 @@ public class ProductoController {
         movimiento.setRol(rol);
         movimiento.setFechaHora(LocalDateTime.now());
         movimientoRepository.save(movimiento);
+
         return producto;
     }
 }
